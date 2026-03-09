@@ -456,11 +456,12 @@
 
             // Calculate max height and range
             maxHeight = (vy * vy) / (2 * G);
-            range = (velocity * velocity * Math.sin(2 * angleRad)) / G;
+            range = Math.abs((velocity * velocity * Math.sin(2 * angleRad)) / G);
 
             // Generate trajectory points
-            const totalTime = (2 * vy) / G;
-            const steps = Math.ceil(totalTime * 60); // 60 fps
+            // For vertical launch (90 degrees), vy is velocity and vx is ~0
+            const totalTime = (2 * Math.abs(vy)) / G;
+            const steps = Math.max(100, Math.ceil(totalTime * 60)); // At least 100 steps, or 60 fps
 
             for (let i = 0; i <= steps; i++) {
                 const t = (i / steps) * totalTime;
@@ -544,14 +545,14 @@
             if (trajectory.length > 0 && time >= 0) { // time >= 0 ensures we don't draw after reset
                 const state = getProjectileState(time);
 
-                // Check if projectile has landed
-                if (isRunning && state.y < 0) {
+                // Check if projectile has landed (with small tolerance for floating point errors)
+                if (isRunning && state.y < -0.01) {
                     isRunning = false;
                     updateStatusIndicator();
                 }
 
-                // Only draw if projectile hasn't landed
-                if (state.y >= 0) {
+                // Only draw if projectile hasn't landed (with small tolerance)
+                if (state.y >= -0.01) {
                     const screenX = 50 + state.x * pixelsPerMeter;
                     const screenY = canvas.height - 20 - state.y * pixelsPerMeter;
 
@@ -653,9 +654,9 @@
             if (isRunning) {
                 time += 1 / 60; // 60 fps
 
-                // Check if projectile has landed
+                // Check if projectile has landed (with small tolerance for floating point errors)
                 const state = getProjectileState(time);
-                if (state.y < 0) {
+                if (state.y < -0.01) {
                     isRunning = false;
                     updateStatusIndicator();
                 }
